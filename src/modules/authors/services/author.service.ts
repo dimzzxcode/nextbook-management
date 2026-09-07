@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
-
 import { notFoundError } from "@/shared/errors";
+import { getAuditMeta } from "@/shared/utils/audit-meta";
 import { parseOrThrow } from "@/shared/validation/helpers";
 import { createAuthorSchema, updateAuthorSchema } from "@/shared/validation/author";
 import { idParamSchema } from "@/shared/validation/query";
@@ -8,18 +7,6 @@ import { requireAuth } from "@/modules/auth/services/require-auth";
 import { requirePermission } from "@/modules/auth/services/authorization.service";
 import { logAuditEvent } from "@/modules/audit/services/audit.service";
 import * as authorRepo from "../repositories/author.repository";
-
-async function getMeta() {
-  try {
-    const h = await headers();
-    return {
-      ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? null,
-      ua: h.get("user-agent"),
-    };
-  } catch {
-    return { ip: null, ua: null };
-  }
-}
 
 export async function listAuthors(rawQuery: unknown) {
   const user = await requireAuth();
@@ -31,7 +18,7 @@ export async function listAuthors(rawQuery: unknown) {
     page: query.page ? Number(query.page) : undefined,
     limit: query.limit ? Number(query.limit) : undefined,
     search: query.search,
-    sortBy: query.sortBy as any,
+    sortBy: query.sortBy as "newest" | "oldest" | "name_asc" | "name_desc" | undefined,
   });
   return result;
 }
@@ -53,7 +40,7 @@ export async function createAuthor(rawInput: unknown) {
     name: input.name,
     biography: input.biography || null,
   });
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "AUTHOR_CREATED",
@@ -77,7 +64,7 @@ export async function updateAuthor(rawInput: unknown) {
     biography: input.biography,
   });
   if (!updated) throw notFoundError("Gagal update author.");
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "AUTHOR_UPDATED",
@@ -97,7 +84,7 @@ export async function deleteAuthor(rawId: unknown) {
   const existing = await authorRepo.findAuthorById(id);
   if (!existing) throw notFoundError("Author tidak ditemukan.");
   await authorRepo.deleteAuthor(id);
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "AUTHOR_DELETED",

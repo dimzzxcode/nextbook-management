@@ -12,8 +12,8 @@ export async function getCurrentUserId(): Promise<number> {
     const userId = Number(payload.sub);
     if (!Number.isFinite(userId)) throw authenticationError("Token tidak valid.");
     return userId;
-  } catch (err: any) {
-    if (err?.code === "AUTHENTICATION_ERROR") throw err;
+  } catch (err: unknown) {
+    if ((err as { code?: string })?.code === "AUTHENTICATION_ERROR") throw err;
     throw authenticationError("Sesi tidak valid atau telah berakhir. Silakan login kembali.");
   }
 }

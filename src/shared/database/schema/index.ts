@@ -7,3 +7,4 @@ export * from "./categories";
 export * from "./books";
 export * from "./sessions";
 export * from "./audit-logs";
+export * from "./password-reset-tokens";

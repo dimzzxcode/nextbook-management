@@ -24,8 +24,8 @@ export async function requireAuth(): Promise<AuthUser> {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new Error("JWT_SECRET belum diatur");
     payload = await verifyAccessToken(token, secret);
-  } catch (err: any) {
-    if (err?.code === "AUTHENTICATION_ERROR") throw err;
+  } catch (err: unknown) {
+    if ((err as { code?: string })?.code === "AUTHENTICATION_ERROR") throw err;
     throw authenticationError("Sesi tidak valid atau telah berakhir. Silakan login kembali.");
   }
 

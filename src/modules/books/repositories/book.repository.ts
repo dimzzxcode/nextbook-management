@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, isNull, isNotNull, or, sql, count } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, isNotNull, or, count, type SQL } from "drizzle-orm";
 
 import { db } from "@/shared/database";
 import { authors, books, categories } from "@/shared/database/schema";
@@ -54,7 +54,7 @@ export async function findBookList(params: BookListParams) {
   const pagination = normalizePagination({ page: params.page, limit: params.limit });
   const offset = getOffset(pagination);
 
-  const conditions: any[] = [];
+  const conditions: (SQL | undefined)[] = [];
 
   // Status filter
   if (params.status === "available") {

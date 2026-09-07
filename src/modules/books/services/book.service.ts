@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
-
 import { db } from "@/shared/database";
 import { books } from "@/shared/database/schema";
 import { eq } from "drizzle-orm";
+import { getAuditMeta } from "@/shared/utils/audit-meta";
 import {
   conflictError,
   notFoundError,
@@ -20,18 +19,6 @@ import { requireAuth } from "@/modules/auth/services/require-auth";
 import { requirePermission } from "@/modules/auth/services/authorization.service";
 import { logAuditEvent } from "@/modules/audit/services/audit.service";
 import * as bookRepo from "../repositories/book.repository";
-
-async function getMeta() {
-  try {
-    const h = await headers();
-    return {
-      ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? null,
-      ua: h.get("user-agent"),
-    };
-  } catch {
-    return { ip: null, ua: null };
-  }
-}
 
 export async function listBooks(rawQuery: unknown) {
   const user = await requireAuth();
@@ -82,7 +69,7 @@ export async function createBook(rawInput: unknown) {
     categoryId: input.categoryId ?? null,
   });
 
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "BOOK_CREATED",
@@ -127,7 +114,7 @@ export async function updateBook(rawInput: unknown) {
 
   if (!updated) throw notFoundError("Gagal update buku.");
 
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "BOOK_UPDATED",
@@ -154,7 +141,7 @@ export async function deleteBook(rawId: unknown) {
     throw conflictError("Buku sudah dihapus sebelumnya.");
   }
 
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "BOOK_DELETED",
@@ -181,7 +168,7 @@ export async function restoreBook(rawId: unknown) {
     throw conflictError("Buku belum dihapus atau sudah dipulihkan.");
   }
 
-  const meta = await getMeta();
+  const meta = await getAuditMeta();
   await logAuditEvent({
     userId: user.id,
     action: "BOOK_RESTORED",

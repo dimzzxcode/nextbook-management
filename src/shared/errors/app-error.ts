@@ -71,19 +71,96 @@ export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
+// Sanitasi log: jangan tulis password, hash, token, secret ke log
+const SENSITIVE_KEYS = ["password", "password_hash", "passwordHash", "token", "secret", "authorization"];
+function sanitizeForLog(input: unknown): unknown {
+  if (input === null || input === undefined) return input;
+  if (typeof input === "string") {
+    // Ganti token-like string yang panjang (>30) agar tidak bocor
+    if (input.length > 30 && /[A-Za-z0-9-_]{20,}/.test(input)) return "[REDACTED]";
+    return input;
+  }
+  if (Array.isArray(input)) return input.map(sanitizeForLog);
+  if (typeof input === "object") {
+    const obj = input as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (SENSITIVE_KEYS.some((s) => k.toLowerCase().includes(s.toLowerCase()))) {
+        out[k] = "[REDACTED]";
+      } else {
+        out[k] = sanitizeForLog(v);
+      }
+    }
+    return out;
+  }
+  return input;
+}
+
+function logServerError(error: unknown): void {
+  // Di production, jangan log stack trace lengkap ke client, hanya di server
+  // Dan sanitasi data sensitif
+  const sanitized = sanitizeForLog(error);
+  console.error("[Unhandled Error]", sanitized);
+  if (error instanceof Error && error.stack && process.env.NODE_ENV !== "production") {
+    console.error(error.stack);
+  }
+}
+
+// Handle postgres/drizzle unique violation → conflict
+function isPostgresUniqueError(error: unknown): boolean {
+  const e = error as { code?: string; message?: string };
+  return e?.code === "23505" || !!e?.message?.includes("unique") || !!e?.message?.includes("duplicate");
+}
+
+export function handleDatabaseError(error: unknown, fallbackMessage = "Terjadi kesalahan pada server."): AppError {
+  if (isAppError(error)) return error;
+  if (isPostgresUniqueError(error)) {
+    return conflictError("Data sudah terdaftar.");
+  }
+  // Jangan expose detail DB
+  logServerError(error);
+  return internalError(fallbackMessage);
+}
+
 export function toErrorResponse(error: unknown): {
   success: false;
-  error: { code: ErrorCode; message: string };
+  error: { code: ErrorCode; message: string; details?: unknown };
 } {
   if (isAppError(error)) {
+    // Untuk validation, sertakan details (fieldErrors) yang sudah sanitasi
+    if (error.code === "VALIDATION_ERROR" && error.details) {
+      return {
+        success: false,
+        error: { code: error.code, message: error.message, details: sanitizeForLog(error.details) },
+      };
+    }
     return {
       success: false,
       error: { code: error.code, message: error.message },
     };
   }
 
-  // Jangan expose detail internal ke client — log di server saja
-  console.error("[Unhandled Error]", error);
+  // ZodError yang belum di-wrap (jika ada yang lupa parseOrThrow)
+  const zError = error as { name?: string; issues?: unknown };
+  if (zError?.name === "ZodError" || zError?.issues) {
+    return {
+      success: false,
+      error: { code: "VALIDATION_ERROR", message: "Data tidak valid." },
+    };
+  }
+
+  // Postgres unique → conflict
+  if (isPostgresUniqueError(error)) {
+    return {
+      success: false,
+      error: { code: "CONFLICT", message: "Data sudah terdaftar." },
+    };
+  }
+
+  // Rate limit sudah AppError, tapi jika ada yang lain
+
+  // Jangan expose detail internal ke client — log di server saja (sanitasi)
+  logServerError(error);
   return {
     success: false,
     error: {
