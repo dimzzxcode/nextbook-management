@@ -41,7 +41,7 @@ Aplikasi full-stack manajemen perpustakaan berbasis **Next.js 16 + TypeScript** 
 
 ### UI
 
-- Landing (beranda), Login, Register, Dashboard (sidebar collapsible, topbar, stat grid) — konsisten dengan `docs/reference_ui/`
+- Landing (beranda), Login, Register, Dashboard (sidebar collapsible, topbar, stat grid)
 - Loading states (`useTransition` pending + disabled), error states (fieldError, serverError generic), empty states
 
 ---
