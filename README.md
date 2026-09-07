@@ -1,8 +1,6 @@
-# Pustaka — Secure Book Management System
+# Pustaka.id — Secure Book Management System
 
 Aplikasi full-stack manajemen perpustakaan berbasis **Next.js 16 + TypeScript** dengan fokus pada **authentication, authorization (RBAC), session management, dan security fundamentals** — bukan sekadar CRUD. Dirancang sebagai portfolio modular monolith yang mensimulasikan aplikasi internal dengan multi-role, permission, audit logging, dan soft delete.
-
-> Base UI dari `docs/reference_ui/` (beranda, login, register, dashboard) dipertahankan dan diintegrasikan tanpa redesign besar — sesuai `docs/AGENT_GUIDELINES.md`.
 
 ---
 
@@ -345,8 +343,7 @@ npx playwright install    # install browsers pertama kali
 │   └── env.ts
 ├── tests/ (unit, integration, e2e)
 ├── drizzle/ (migrations)
-├── docs/ (PRD, TASK, AGENT_GUIDELINES, reference_ui)
-└── vitest.config.ts, playwright.config.ts, drizzle.config.ts, next.config.ts
+└── vitest.config.ts, drizzle.config.ts, next.config.ts
 ```
 
 ---
@@ -418,6 +415,46 @@ npx playwright install    # install browsers pertama kali
 ### Audit Logging
 
 - `audit_logs(user_id FK set null, action, resource, resource_id, metadata jsonb, ip, ua, created_at)` — `logAuditEvent()` dipanggil di `register/login/logout, book/author/category/role/permission, user role, session, password`. Viewer `audit.read` dengan filter `action/userId/resource/search` + pagination, `leftJoin users`, immutable (no update/delete API).
+
+---
+
+## Screenshots
+
+### Landing Page
+
+![Pustaka.id Landing Page](public/screenshots/pustaka.id_home.png)
+
+### Login
+
+![Pustaka.id Login](public/screenshots/pustaka.id_login.png)
+
+### Register
+
+![Pustaka.id Register](public/screenshots/pustaka.id_register.png)
+
+### Dashboard
+
+![Pustaka.id Dashboard](public/screenshots/pustaka.id_dashboard.png)
+
+### Book Management
+
+![Pustaka.id Book Management](public/screenshots/pustaka.id_books.png)
+
+### Author Management
+
+![Pustaka.id Book Management](public/screenshots/pustaka.id_author.png)
+
+### Category Management
+
+![Pustaka.id Book Management](public/screenshots/pustaka.id_category.png)
+
+### User Management
+
+![Pustaka.id Book Management](public/screenshots/pustaka.id_users.png)
+
+### Audit Logs
+
+![Pustaka.id Audit Logs](public/screenshots/pustaka.id_audit-logs.png)
 
 ---
 
