@@ -51,7 +51,7 @@ describe("Authorization Logic (sync)", () => {
   });
 
   it("STAFF should have book/author/category * but not audit.read", () => {
-    const staffPerms = new Set([
+    const staffPerms = new Set<string>([
       PERMISSIONS.BOOK_CREATE,
       PERMISSIONS.BOOK_READ,
       PERMISSIONS.BOOK_UPDATE,
@@ -71,7 +71,7 @@ describe("Authorization Logic (sync)", () => {
   });
 
   it("USER should only have book.read", () => {
-    const userPerms = new Set([PERMISSIONS.BOOK_READ]);
+    const userPerms = new Set<string>([PERMISSIONS.BOOK_READ]);
     expect(userPerms.has("book.read")).toBe(true);
     expect(userPerms.has("book.create")).toBe(false);
   });

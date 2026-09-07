@@ -19,12 +19,14 @@ const PUBLIC_ONLY = ["/login", "/register"];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
+    (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 }
 
 function isPublicOnly(pathname: string): boolean {
-  return PUBLIC_ONLY.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  return PUBLIC_ONLY.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
 }
 
 async function verifyToken(token: string, secret: string): Promise<boolean> {
@@ -46,7 +48,8 @@ export async function middleware(request: NextRequest) {
   const secret = process.env.JWT_SECRET;
 
   // Jika secret belum set, lewati (akan gagal di build tapi jangan crash middleware)
-  const isAuthenticated = token && secret ? await verifyToken(token, secret) : false;
+  const isAuthenticated =
+    token && secret ? await verifyToken(token, secret) : false;
 
   // Protected route but not authenticated → redirect to /login
   if (isProtected(pathname) && !isAuthenticated) {
